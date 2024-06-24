@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arena Hunt</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #121212;
+      color: #e0e0e0;
+      font-family: 'Roboto', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      max-width: 800px;
+      margin: 20px;
+    }
+    .lobby {
+      background-color: #1e1e1e;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+      text-align: center;
+    }
+    .lobby input[type="text"] {
+      width: 80%;
+      padding: 10px;
+      margin-bottom: 20px;
+      font-size: 16px;
+      border: 1px solid #333;
+      border-radius: 5px;
+      background-color: #333;
+      color: #e0e0e0;
+    }
+    .lobby button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .lobby button:hover {
+      background-color: #0056b3;
+    }
+    .game-container {
+      display: none;
+      text-align: center;
+    }
+    canvas {
+      border: 1px solid #333;
+      background-color: #1e1e1e;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+    .scoreboard {
+      margin-top: 10px;
+      font-size: 18px;
+      color: #e0e0e0;
+    }
+    .status-bar {
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .status-bar .health {
+      color: red;
+    }
+    .status-bar .ammo {
+      color: #007bff;
+    }
+    .instructions {
+      margin-top: 20px;
+      text-align: left;
+      color: #e0e0e0;
+    }
+    .instructions h2 {
+      margin-bottom: 10px;
+      color: #007bff;
+    }
+    .instructions ul {
+      list-style: none;
+      padding: 0;
+    }
+    .instructions li {
+      margin-bottom: 5px;
+    }
+    .logo {
+      font-size: 36px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: #007bff;
+      animation: glow 1s ease-in-out infinite alternate;
+      text-shadow: 0 0 10px #007bff, 0 0 20px #007bff, 0 0 30px #007bff, 0 0 40px #007bff, 0 0 50px #007bff, 0 0 60px #007bff, 0 0 70px #007bff;
+    }
+    @keyframes glow {
+      from {
+        text-shadow: 0 0 10px #007bff, 0 0 20px #007bff, 0 0 30px #007bff, 0 0 40px #007bff, 0 0 50px #007bff, 0 0 60px #007bff, 0 0 70px #007bff;
+      }
+      to {
+        text-shadow: 0 0 20px #007bff, 0 0 30px #007bff, 0 0 40px #007bff, 0 0 50px #007bff, 0 0 60px #007bff, 0 0 70px #007bff, 0 0 80px #007bff;
+      }
+    }
+    .leaderboard {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      color: #e0e0e0;
+    }
+    .leaderboard h2 {
+      margin: 0 0 10px 0;
+    }
+    .leaderboard-entry {
+      font-size: 14px;
+      margin: 2px 0;
+    }
+    .kill-notification {
+      position: absolute;
+      top: 10px;
+      left: 0;
+      padding: 10px;
+      background: rgba(255, 0, 0, 0.8);
+      color: white;
+      border-radius: 5px;
+      animation: slideIn 0.5s forwards;
+    }
+    @keyframes slideIn {
+      from {
+        transform: translateX(-100%);
+      }
+      to {
+        transform: translateX(0);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container lobby">
+    <div class="logo">Arena Hunt</div>
+    <input type="text" id="usernameInput" placeholder="Enter your username">
+    <button id="playButton">Play Now</button>
+    <div class="instructions">
+      <h2>How to Play</h2>
+      <ul>
+        <li>Use arrow keys to move your character.</li>
+        <li>Press 1 to switch to the sword.</li>
+        <li>Press 2 to switch to the gun (if you have picked it up).</li>
+        <li>Click to attack with your sword or shoot with your gun.</li>
+        <li>Take cover behind obstacles and avoid enemy attacks.</li>
+        <li>Collect the gun power-up to gain ammunition.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="container game-container">
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div class="scoreboard"></div>
+    <div class="status-bar">
+      <div class="health">Health: <span id="healthValue">100</span></div>
+      <div class="ammo">Ammo: <span id="ammoValue">0</span></div>
+    </div>
+  </div>
+
+  <div class="leaderboard">
+    <h2>Leaderboard</h2>
+    <div id="leaderboardDisplay"></div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
